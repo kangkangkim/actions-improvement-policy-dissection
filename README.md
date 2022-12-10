@@ -1,248 +1,213 @@
-# Policy Dissection
+---
+layout: post
+comments: true
+title: Human-AI Shared Control via Policy Dissection
+author: Ruikang Wu and Mengyuan Zhang (Team 10)
+date: 2022-10-19
 
-[NeurIPS 2022] Official implementation of the paper: **Human-AI Shared Control via Policy Dissection**
+---
 
-[**Webpage**](https://metadriverse.github.io/policydissect/) |
-[**Code**](https://github.com/metadriverse/policydissect) |
-[**Video**](https://youtu.be/7UmScmKMFE4) |
-[**Paper**](https://arxiv.org/pdf/2206.00152.pdf) |
+> In many complex tasks, RL-trained policy may not solve the tasks efficiently and correctly. The training process may cost too much time. Policy dissection is a frequency-based method, which can convert RL-trained policy into target-conditioned policy. For this method, human can interacte with AI inorder to get a more good and efficeient result. In this project, we want to explore the human-AI control and implementation of the policy dissection. We will add new action in MetaDrive enviornment.
 
-[comment]: <> ([**Poster**]&#40;https://github.com/decisionforce/HACO/blob/main/docs/iclr_poster.pdf&#41; )
+<!--more-->
+{: class="table-of-content"}
 
-Currently, we provide some interactive neural controllers enabled by *Policy Dissection*.
-The policy dissection method and training code will be updated soon.
+* TOC
+{:toc}
 
-**Supported Environments**:
 
-- [x] MetaDrive
-- [x] Pybullet-Quadrupedal Robot (Forked from: https://github.com/Mehooz/vision4leg.git)
-- [x] Isaacgym-Cassie (Forked from: https://github.com/leggedrobotics/legged_gym)
-- [x] Isaacgym-ANYmal (Forked from: https://github.com/leggedrobotics/legged_gym)
-- [x] Gym-Walker (Mujoco-200)
-- [x] Gym-BipedalWalker (Box2D)
-- [x] Gym-Ant (Mujoco-200)
+
+## Introduction
+
+This article will refer to the [source code](https://github.com/kangkangkim/actions-improvement-policy-dissection) .
+
+First of all, we want to explore the relationship between kinematic behavior and the neural activities. In this experiment, we want to figure out the patterns behind some certain behaviors. 
+
+Second, we will use the metadrive enviornment to explore how PPO works in that environment. The environment includes single agent enviornment and Multi-Agent Environment and real enviornment.
+
+Third, we want to explore what is policy dissection and implement it into metadrive.
+
+Fourth, we will compare the policy dissection versus the PPO algorithm to explore the performance of policy dissection.
+
+Finally, we will try to figure out whther policy dissection can be used in many real world scenarios for our future research plan.
+
+## Human-AI Shared Control
+
+The present human-AI shared chontrol methods can be roughly divided into two categories. The first category is involving training with a human control and testing the trained policy withou the human control [5]. The other is to have human carry out human auxiliary tasks throughout both training and testing. In policy dissestion method, it allows the human cooperate with AI during the testing, but human does not participate in training.
+
+In the test, humans need to trigger some subtle operations when necessary, such as shifting to the left and jumping, to help better complete the task.
+
+## Policy Dissection
+
+- What is the Policy Dissection?
+
+  Previous reinforcement learning methods have attempted to design goals-conditioned policies that can achieve human goals, but at the cost of redesigning reward functions and training paradigms. Hence the Policy Dissection, an approach inspired by neuroscience methods based on the primate motor cortex. Using this approach, manually controllable policies can be derived in trained reinforcement learning agents. Experiments show that under the blessing of Policy Dissection, in MetaDrive, it can improve performance and security.
+
+- Four main steps for Policy Dissection[1]
+
+  **1. Monitoring Neural Activity and Kinematics:** The policy dissection expands the trained policy and records the tracked neural activities and kinematic attributes, such as velocity and yaw. It will recorde the neural activities and kinematic attributes for further anaylsis.
+
+  **2. Associating Units with Kinematic Attributes:** According to the records of neural activities and kinematic attributes, the same kinematic patterns will appear with different frequencies. So for a kinematic patterns, the unit with the smallest frequency discrepancy is the motor primitive. 
+
+  **3. Building Stimulation-evoked Map:** Behavior can be described by changing a subset of kinematic attributes, or by activating a corresponding set of motor primitives. These movements are associated with certain behaviors to generate building blocks that include stimulation-evoked map.
+
+  **4. Steering Agent via Stimulation-evoked Map:** Activate the kinematic attribute associated with the motion property and apply its derivative to the agent. The goal is to find features that can be easily scaled up or down kinematic attributes by selecting a unit.
+
+- Workflow of Policy Dissection
+
+  ![workflow]({{ '/assets/images/team10/algorithm.png'| relative_url}})
+  {: style="width: 400px; max-width: 100%;"}
+  *Fig 1. workflow of Policy Dissection* [1].
+
+## PPO Result on MetaDrive
+
+We try to run MetaDrive with PPO algorithm. We find that in a simple environment (fig 2), our agent can reach destination safely and quickly. But when encountering some complicated situatins (fig 3 and 4), some sign barrels and obstacles are added, and the driving of the agent will have problems. Like situtation in fig 3, the agent directly hit the marked barrels and does not choose to avoid it, resulting in many collisions. Like the situtation in fig 4, the agent slows down slightly when it encounters an obstacle, but it cannot avoid it directly, but looks for the correct direction by collision. These situations may affect the final result, a more or less reduced final reward (you can check the comparsion results in PPO with Policy Dissection vs PPO part).
+
+![ppo demo1]({{ '/assets/images/team10/demo1.gif'| relative_url}}){: style="width: 400px; max-width: 100%;"}
+*Fig 2. Demo 1*
+
+![ppo demo2]({{ '/assets/images/team10/demo2.gif'| relative_url}}){: style="width: 400px; max-width: 100%;"}
+*Fig 3. Demo 2*
+
+![ppo demo2]({{ '/assets/images/team10/demo3.gif'| relative_url}}){: style="width: 400px; max-width: 100%;"}
+*Fig 4. Demo 3*
+
+Here we also procide a video of a car encountering an obstacle while driving. We can clearly see that when the car encounters an obstacle, it will not recognize it, nor will it consciously avoid it, but will directly hit it. This situation greatly affected the final result.
+
+![Watch the video]('/assets/images/team10/metadrive.png')](https://youtu.be/ZsYGdemYVyE)
+
+## Policy Dissection Result
+
+Here we provide an example of Human-AI shared control through policy dissection method. Through human control, we let the car successfully avoid obstacles and reach the end point.
+
+![video of policy dissection]({{ '/assets/images/team10/metadrive_dissection.mp4'| relative_url}}){: style="width: 400px; max-width: 100%;"}
+
+## PPO with Policy Dissection vs PPO
+
+Here we try three road maps:
+
+![map1]({{ '/assets/images/team10/demo1.png'| relative_url}}){: style="width: 400px; max-width: 100%;"}
+*Fig 5. road map 1*
+
+![map2]({{ '/assets/images/team10/demo2.png'| relative_url}}){: style="width: 400px; max-width: 100%;"}
+*Fig 6. road map 2*
+
+![map3]({{ '/assets/images/team10/demo3.png'| relative_url}}){: style="width: 400px; max-width: 100%;"}
+*Fig 7. road map 3*
+
+| Road Map | Algorithm                  | Episode Reward | Episode Cost | Arriving Destination |
+| -------- | -------------------------- | -------------- | ------------ | -------------------- |
+| 1        | PPO with Policy Dissection | 438.050        | 0.0          | True                 |
+| 1        | PPO                        | 345.505        | 17.0         | True                 |
+| 2        | PPO with Policy Dissection | 341.361        | 0.0          | True                 |
+| 2        | PPO                        | 297.871        | 8.0          | True                 |
+| 3        | PPO with Policy Dissection | 439.840        | 0.0          | True                 |
+| 3        | PPO                        | 431.896        | 1.0          | True                 |
+
+*Table 1. All the result on both algorithm*
+
+We compare the result of PPO and PPO with policy dissection, we can find that that the overall performance of PPO with policy dissection is much better. First of all, the rewards of PPO with policy dissection are all higher than that of PPO. In the highest case, the reward can be almost 100 higher. The purpose of reinforcement learning is to maximize the total rewards, which means the policy dissection plays a role and improves the performance. Secondly, PPO always has an episode cost, while the episode cost of PPO with policy dissection is always 0. The episode cost is used to detect the safety of driving, and if a crash occurs, the cost will increses by 1. So, this means that PPO has some collisions during the running process, such as colliding with other cars or obstacles, and polict dissection avoids all obstacles very well. At the end, both algorithms can successfully reache the destination. To sum up, the PPO with policy dissection has much better performance than the PPO, which means that polciy dissection can help to get better result in test, and can also improve the safty of the entire driving.
+
+## Exploration
+
+In our daily life, we may encounter a lot of traffic and need to want to change lanes, or want to change lanes when there is a traffic jam. We need to stop first and wait befor changing lanes, just like the situtation presented in fig 8 and 9. In the current actions, there is no action of waiting and changing lanes together, so we try to add this action. This can better simulate some behaviors in real life.
+
+![left]({{ '/assets/images/team10/left.png'| relative_url}}){: style="width: 400px; max-width: 100%;"}
+*Fig 8. wait and turn left*
+![right]({{ '/assets/images/team10/right.png'| relative_url}}){: style="width: 400px; max-width: 100%;"}
+*Fig 9. wait and turn right*
+
+### Update and Changes
+
+In **metadrive_env.py**, we add two new function, *bleft* and *bright*, which use to talk the engine what to do in the *setup_engine* function.
+
+```
+def setup_engine(self):
+    ...
+    self.engine.accept("g", self.bleft)
+    self.engine.accept("z", self.bright)
+
+def bleft(self):
+    self.command = "Brake and Left Lane Change"
+        
+def bright(self):
+    self.command = "Brake and Right Lane Change"
+```
+
+In **play_metadrive.py**, we add two new action to the conditional control map. "Brake and Left Lane Change" frist slow down the speed and then try to get into left lane. "Brake and Right Lane Change" first slow down the speed and then try to get into right lane.
+
+```
+PPO_EXPERT_CONDITIONAL_CONTROL_MAP = {
+    "Left Lane Change": {
+        0: [(1, -8.5)]
+    },
+    "Right Lane Change": {
+        0: [(1, 7)]
+    },
+    "Brake": {
+        0: [(249, -20)]
+    },
+    "Brake and Left Lane Change": {
+        0: [(20, -20), (1, -8.5)]
+    },
+    "Brake and Right Lane Change": {
+        0: [(20, -20), (1, 7)]
+    }
+}
+```
+
+### Current Actions we have
+
+| Actions             | Command                     | Setup_engine |
+| ------------------- | --------------------------- | ------------ |
+| Forward             | Lane Follow                 | "w"          |
+| Brake               | Brake                       | "s"          |
+| Turn Left           | Left Lane Change            | "a"          |
+| Turn Right          | Right Lane Change           | "d"          |
+| Wait and Turn Left  | Brake and Left Lane Change  | "g"          |
+| Wait and Turn Right | Brake and Right Lane Change | "z"          |
+
+### Demo
+
+[![Watch the video]](https://www.youtube.com/watch?v=5_4yiFnAndk)
+
+### Conclusion
+
+As you can see, using Human AI shared control, enabled by policy dissection, can efficiently solve many hard situations compared to the PPO algorithm.
+
+By increasing the level of traffic density, wait and turn left and wait and turn right will become a safe choice for changing lane. Compared to the directly turn right and turn left, wait and turn left and wait and turn right are less chance to cause collison. In addition, in the real world, in the high way, for safe purpose, we always brake and slow down to turn lane rather than directly turn right or left. For this action improvement, it is more safe and real.
+
+### Future plan
+
+Because the human-AI shared control, enabled by policy dissection, can solve a lot of complex situations, we can use the human-AI shared control in the imitation training process. It will become a good demonstration for solving many complex scenarios. We will continue to expore it in the winter break.
+
+
 
 ## Installation
 
 ### Basic Installation
 
-```bash
-# Clone the code to local
-git clone https://github.com/metadriverse/policydissect.git
-cd policydissect
+We completed the basic installation according to the [
+policy dissect's](https://github.com/metadriverse/policydissect.git) instructions. It contains some basic packages we need.
 
-# Create virtual environment
-conda create -n policydissect python=3.7
-conda activate policydissect
+### Environment Installation
 
-# install torch
-pip3 install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
+We also installed supported environments for testing the policy dissection method.
 
-# Install basic dependency
-pip install -e .
-```
+- [MetaDrive](https://github.com/metadriverse/metadrive.git)
 
-### IsaacGym Installation (Optional)
-
-For playing with agents trained in IsaacGym, follow the instructions below to install IsaacGym
-- Download and install Isaac Gym Preview 3 from https://developer.nvidia.com/isaac-gym
-- cd ```isaacgym/python && pip install -e .```
-
-Please review the file `isaacgym/docs/install.html` for more information on installation.
-See the [Troubleshooting](#troubleshooting) section for debugging.
-
-
-### Mujoco Installation (Optional)
-
-For playing with the Mujoco-Ant and Mujoco-Walker, please
-- install **mujoco200** according to https://www.roboti.us/download.html (Mujoco licence can be found at **https://www.roboti.us/license.html**)
-- copy contents in the folder to `~/.mujoco/mujoco200`
-- copy licence from https://www.roboti.us/license.html to `~/.mujoco/`
-- add this line to `.bashrc`: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/zhenghao/.mujoco/mujoco200/bin`
-- run ```pip install mujoco-py==2.0.2.7``` (Solutions of compiling error can be easily found at https://github.com/openai/mujoco-py/issues)
-
-## Play with AI
-
-### MetaDrive
-
-To collaborate with the AI driver in [MetaDrive environment](https://github.com/metadriverse/metadrive), run:
-
-```bash
-# MetaDrive
-# Keymap:
-# - KEY_W: lane following
-# - KEY_A: left lane changing
-# - KEY_S: braking
-# - KEY_D: right lane changing
-# - KEY_R:Reset
-python play/play_metadrive.py
-``` 
-
-
-### Pybullet Quadrupedal Robot
-
-The quadrupedal robot is trained with the code provided by https://github.com/Mehooz/vision4leg.git.
-For playing with legged robot, run:
-
-```bash
-# Pybullet Quadrupedal Robot
-# Keymap:
-# - KEY_W: forward
-# - KEY_A: moving left
-# - KEY_S: stop
-# - KEY_D: moving right
-# - KEY_R: reset
-python play/play_pybullet_a1.py
-python play/play_pybullet_a1.py --hard
-python play/play_pybullet_a1.py --hard --seed 1001
-```
-
-
-Also, you can collaborate with AI and challenge the hard environment consisting of obstacles and challenging terrains by
-adding `--hard` flag. You can change to a different environment by adding ```--seed your_seed_int_type```.
-
-*tips: Avoid running fast!*
-
-### IsaacGym Cassie
-
-The Cassie robot is trained with the code provided by https://github.com/leggedrobotics/legged_gym with a fixed forward
-command ```[1, 0, 0]```, and thus can only move forward. By applying *Policy Dissection*, primitives related to yaw
-rate, forward speed, height control and torque force can be identified. Activating these primitives
-enable various skills like crouching, forward jumping, back-flipping and so on.
-Run the following command to play with the robot. Add flag```--parkour```to launch a challenging parkour environment.
-
-```bash
-# Keymap:
-# - KEY_W:Forward
-# - KEY_A:Left
-# - KEY_S:Stop
-# - KEY_C:Crouch
-# - KEY_X:Tiptoe
-# - KEY_Q:Jump
-# - KEY_D:Right
-# - KEY_SPACE:Back Flip
-# - KEY_R:Reset
-python play/play_cassie.py
-python play/play_cassie.py --parkour
-```
-
-*tips: Switch to Tiptoe state before pressing Key_Q to increase the distance of jump.*
-
-
-> **Note**
-> Do not draw the windows or close the pygame window during running.
-
-
-### Gym Environments
-
-We also discover motor primitives in three gym environments: Box2d-BipedalWalker, Mujoco-Ant and Mujoco-Walker. 
-You can try them via:
-
-
-```bash
-# BipedalWalker
-# Keymap:
-# - KEY_W: jump
-# - KEY_A: stand up from split
-# - KEY_S: restore running after jumping
-# - KEY_R: reset
-python play/play_gym_bipedalwalker.py
-
-# Mujoco-Ant
-# Keymap:
-# - KEY_W: move up
-# - KEY_A: move left
-# - KEY_S: move down
-# - KEY_D: move right
-# - KEY_Q: rotation
-# - KEY_R: reset
-python play/play_mujoco_ant.py
-    
-# Mujoco-Walker
-# Keymap:
-# - KEY_R: reset
-# - KEY_A: stop
-# - KEY_W: freeze red knee
-# - KEY_D: restore running
-python play/play_mujoco_walker.py
-```
-
-### Comparison with explicit goal-conditioned control
-
-To measure the coarseness of the control approach enabled by *Policy Dissection*, we train a goal-conditioned
-quadrupedal ANYmal robot controller with code provided by https://github.com/leggedrobotics/legged_gym. We build
-primitive-activation conditional control system on this controller with a PID
-controller determining the unit output according to the tracking error. As a result, it can track the target yaw command
-and can achieve the similar control precision, compared to explicitly indicating the goal in the network input.
-Video is available [here](https://metadriverse.github.io/policydissect/#Tracking%20Demo).
-
-The experiment script can be found at ```play/run_tracking_experiment.py```. 
-The default yaw tracking is achieved by explicit goal-conditioned control, while
-running ```python play/run_tracking_experiment.py --primitive_activation```
-will change to primitive-activation conditional control.
-
-## Policy Dissection Examples
-In ```example``` folder, we provide two examples showing how to dissect policy. The results can be read by opening
-```read_result.ipynb``` with jupyter notebook. Also, the identified units are chosen as motor primitives for evoking 
-behaviors of Anymal and the MetaDrive agents. Check previous section about how to play with them.
-
-## Troubleshooting
-
-### Installing IsaacGym
-
-If you encounter `ImportError: libpython3.7m.so.1.0: cannot open shared object file: No such file or directory`, run
-this:
-
-```bash
-export LD_LIBRARY_PATH=/path/to/libpython/directory
-# If you are using Conda, the path should be /path/to/conda/envs/your_env/lib.
-# For example:
-export LD_LIBRARY_PATH=/home/zhenghao/anaconda3/envs/policydissect/lib
-```
-
-If you encounter `CalledProcessError: Command '['which', 'c++']' returned non-zero exit status 1.`, try this:
-```bash
-sudo apt-get install build-essential
-```
-
-
-If you encounter `AttributeError: module 'distutils' has no attribute 'version'` from tensorboard,
-try this:
-```bash
-pip install -U setuptools==50.0.0
-```
-
-### Installing Mujoco
-
-
-If you encounter: `fatal error: GL/osmesa.h: No such file or directory`:
-
-```bash
-sudo apt-get install libosmesa6-dev
-```
-
-If you encounter: `error: [Errno 2] No such file or directory: 'patchelf': 'patchelf'`:
-
-```bash
-sudo apt-get install patchelf
-```
-
-If you encounter: `ERROR: GLEW initalization error: Missing GL version`:
-
-```bash
-sudo apt-get install -y libglew-dev
-```
-
+  ![metadrive]({{ '/assets/images/team10/metadrive.png'| relative_url}}){: style="width: 400px; max-width: 100%;"}
 
 ## Reference
 
-```
-@inproceedings{
-    li2022humanai,
-    title={Human-{AI} Shared Control via Policy Dissection},
-    author={Quanyi Li and Zhenghao Peng and Haibin Wu and Lan Feng and Bolei Zhou},
-    booktitle={Thirty-Sixth Conference on Neural Information Processing Systems},
-    year={2022},
-    url={https://openreview.net/forum?id=LCOv-GVVDkp}
-}
-```
+[1] Q. Li, Z. Peng, H. Wu, L. Feng, and B. Zhou. Human-AI shared control via policy dissection. *arXiv preprint arXiv:2206.00152*, 2022. 
+
+[2] D. Bau, J.-Y. Zhu, H. Strobelt, A. Lapedriza, B. Zhou, and A. Torralba. Understanding the role of individual units in a deep neural network. *Proceedings of the National Academy of Sciences*, 117(48):30071–30078, 2020.
+
+[3] S. Guo, R. Zhang, B. Liu, Y. Zhu, D. Ballard, M. Hayhoe, and P. Stone. Machine versus human attention in deep reinforcement learning tasks. *Advances in Neural Information Processing Systems*, 34, 2021.
+
+[4] B. Zhou, D. Bau, A. Oliva, and A. Torralba. Interpreting deep visual representations via network dissection. *IEEE transactions on pattern analysis and machine intelligence*, 41(9):2131–2145, 2018.
+
+[5] R. Zhang, F. Torabi, G. Warnell, and P. Stone. Recent advances in leveraging human guidance for sequential decision-making tasks. *Autonomous Agents and Multi-Agent Systems*, 35(2):1–39, 2021.
+
+[6] Q. Li, Z. Peng, Z. Xue, Q. Zhang, and B. Zhou. Metadrive: Composing diverse driving scenarios for generalizable reinforcement learning. *arXiv preprint arXiv:2109.12674*, 2021.
