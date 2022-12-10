@@ -1,0 +1,7 @@
+README.md
+setup.py
+policydissect.egg-info/PKG-INFO
+policydissect.egg-info/SOURCES.txt
+policydissect.egg-info/dependency_links.txt
+policydissect.egg-info/requires.txt
+policydissect.egg-info/top_level.txt
